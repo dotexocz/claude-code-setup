@@ -11,23 +11,26 @@ o vlastní **MCP servery**, **skilly**, **subagenty** a **slash commands** —
 
 ## Co je v tomto repu
 
-| Cesta                                      | Co to dělá                                              |
-|--------------------------------------------|---------------------------------------------------------|
-| `.claude/settings.json`                    | Pravidla, co Claude smí a co nesmí (allow / deny)        |
-| `.claude/CLAUDE.md`                        | Projektový systémový prompt — pravidla a stav projektu  |
-| `.mcp.json`                                | Konfigurace MCP serverů (zde: Context7)                 |
-| `.claude/skills/`                          | Tři vlastní skilly                                      |
-| `.claude/agents/`                          | Dva vlastní subagenti                                   |
-| `.claude/commands/`                        | Dva vlastní slash commands                              |
-| `docs/`                                    | Vysvětlující dokumentace v češtině                      |
+| Cesta                                      | Co to dělá                                                    |
+|--------------------------------------------|---------------------------------------------------------------|
+| `.claude/settings.json`                    | Pravidla, co Claude smí a co nesmí (allow / deny) + hooks      |
+| `.claude/CLAUDE.md`                        | Projektový systémový prompt — pravidla a stav projektu        |
+| `.mcp.json`                                | Konfigurace MCP serverů (Context7, Playwright, GitHub)         |
+| `.env.example`                             | Šablona env proměnných (token pro GitHub MCP, telemetrie)      |
+| `.claude/skills/`                          | Tři vlastní skilly                                             |
+| `.claude/agents/`                          | Dva vlastní subagenti                                          |
+| `.claude/commands/`                        | Dva vlastní slash commands                                     |
+| `.claude/hooks/`                           | PostToolUse hook pro audit log Edit/Write                      |
+| `docs/`                                    | Vysvětlující dokumentace v češtině                             |
 
 ```
 claude-code-setup/
 ├── README.md                            ← tento soubor
 ├── .gitignore
-├── .mcp.json                            ← MCP servery
+├── .env.example                         ← šablona pro tokeny / telemetry
+├── .mcp.json                            ← 3 MCP servery
 ├── .claude/
-│   ├── settings.json                    ← permissions
+│   ├── settings.json                    ← permissions + hooks
 │   ├── CLAUDE.md                        ← projektový prompt + Current Status
 │   ├── skills/
 │   │   ├── czech-commit-message/SKILL.md
@@ -36,15 +39,19 @@ claude-code-setup/
 │   ├── agents/
 │   │   ├── czech-code-reviewer.md
 │   │   └── docs-writer-cs.md
-│   └── commands/
-│       ├── stav.md                      ← /stav
-│       └── zavrit-sezeni.md             ← /zavrit-sezeni
+│   ├── commands/
+│   │   ├── stav.md                      ← /stav
+│   │   └── zavrit-sezeni.md             ← /zavrit-sezeni
+│   └── hooks/
+│       └── log-edits.sh                 ← PostToolUse: zapisuje do .claude/edits.log
 └── docs/
     ├── 1_settings.md
     ├── 2_mcp.md
     ├── 3_skills.md
     ├── 4_subagents.md
-    └── 5_commands.md
+    ├── 5_commands.md
+    ├── 6_hooks.md
+    └── 7_observability.md
 ```
 
 ---
@@ -53,9 +60,11 @@ claude-code-setup/
 
 ### MCP servery (`.mcp.json`)
 
-- **Context7** (HTTP) – stahuje aktuální dokumentaci knihoven
-  (React, Next.js, Tailwind, Prisma, Playwright, openpyxl, …).
-  Aktivuje se napsáním `use context7` do promptu.
+| Server       | Typ    | Co dělá                                                 |
+|--------------|--------|---------------------------------------------------------|
+| `context7`   | HTTP   | Aktuální dokumentace knihoven (`use context7` v promptu) |
+| `playwright` | stdio  | Ovládání prohlížeče — navigace, klikání, screenshoty     |
+| `github`     | HTTP   | GitHub API (issues, PRs, search) — token přes env var    |
 
 → podrobně: [`docs/2_mcp.md`](docs/2_mcp.md)
 
@@ -87,6 +96,20 @@ claude-code-setup/
 
 → podrobně: [`docs/5_commands.md`](docs/5_commands.md)
 
+### Hooks (`.claude/hooks/`)
+
+| Hook                  | Kdy se spustí                          | Co dělá                                          |
+|-----------------------|----------------------------------------|--------------------------------------------------|
+| `log-edits.sh`        | `PostToolUse` po Edit/Write/MultiEdit  | Zapíše řádek do `.claude/edits.log` (audit trail) |
+
+→ podrobně: [`docs/6_hooks.md`](docs/6_hooks.md)
+
+### Observability
+
+Telemetrie přes OpenTelemetry — defaultně **vypnutá**, návod na zapnutí
+(console exporter pro učení, OTLP pro produkci) v
+[`docs/7_observability.md`](docs/7_observability.md).
+
 ---
 
 ## Jak to vyzkoušet
@@ -97,28 +120,37 @@ claude-code-setup/
    cd claude-code-setup
    ```
 
-2. **Otevři v Claude Code:**
+2. **Připrav env (volitelné — jen když chceš GitHub MCP):**
+   ```bash
+   cp .env.example .env
+   # vyplň GITHUB_PERSONAL_ACCESS_TOKEN
+   ```
+
+3. **Otevři v Claude Code:**
    ```bash
    claude
    ```
    Claude Code automaticky načte `.claude/` z aktuálního adresáře (skilly,
-   agenty, commands) a `.mcp.json` se zeptá na povolení MCP serveru.
+   agenty, commands, hooks) a `.mcp.json` se zeptá na povolení MCP serverů.
 
-3. **Vyzkoušej slash command:**
+4. **Vyzkoušej slash command:**
    ```
    /stav
    ```
 
-4. **Vyzkoušej skill** (Claude ho aktivuje automaticky podle popisu, nebo
+5. **Vyzkoušej skill** (Claude ho aktivuje automaticky podle popisu, nebo
    ho můžeš zavolat ručně):
    ```
    Vytvoř commit message pro aktuální změny.
    ```
 
-5. **Vyzkoušej subagenta:**
+6. **Vyzkoušej subagenta:**
    ```
    Spusť czech-code-reviewer nad poslední změnou.
    ```
+
+7. **Ověř, že hook funguje:** Po pár Edit/Write operacích se podívej do
+   `.claude/edits.log` — měly by tam být audit záznamy.
 
 ---
 

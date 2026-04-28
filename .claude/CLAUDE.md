@@ -83,15 +83,20 @@ Tělo je prompt, který Claude Code provede při zavolání příkazu.
 
 ## Current Status
 
-_Aktualizováno: 2026-04-28_
+_Aktualizováno: 2026-04-28 14:30_
 
-**Last done:** Vytvořena kompletní ukázková konfigurace — `.claude/settings.json`,
-`.mcp.json` (Context7), 3 skilly, 2 subagenti, 2 slash commands. Repo
-nasazeno na GitHub.
+**Last done:** Doplněno o **PostToolUse hook** (`.claude/hooks/log-edits.sh`
+zapisující audit trail do `.claude/edits.log`), **dva nové MCP servery**
+(Playwright stdio + GitHub HTTP s tokenem přes env), **observability návod**
+(`docs/7_observability.md`) a `.env.example` šablonu. Repo má teď 7 kapitol
+dokumentace.
 
 **Next:**
 - Otevřít projekt v Claude Code a otestovat, že se všechny komponenty
-  načtou (`/skills`, `/agents`, `/stav`).
-- Odevzdat odkaz na repo do školního systému před deadlinem **8. 5. 2026 23:59**.
+  načtou (`/skills`, `/agents`, `/stav`, hook se spustí, MCP servery
+  se zeptají na schválení).
+- Případně si vygenerovat GitHub PAT a vyplnit `.env`.
+- Odevzdat odkaz na repo do školního systému před deadlinem
+  **8. 5. 2026 23:59**.
 
 **Known issues:** žádné
