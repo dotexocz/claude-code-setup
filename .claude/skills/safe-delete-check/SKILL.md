@@ -25,8 +25,8 @@ Před spuštěním destruktivního příkazu vypiš uživateli, co konkrétně s
 
 ```
 Chystám se smazat tyto položky:
-- soubor: /Users/luky/Desktop/projekt/test.log (12 KB)
-- adresář: /Users/luky/Desktop/projekt/temp/ (47 souborů, 380 MB)
+- soubor: ~/projekt/test.log (12 KB)
+- adresář: ~/projekt/temp/ (47 souborů, 380 MB)
 - větev: feature/old-design (lokální i remote)
 
 Pokračovat? (čekám na "ano")
